@@ -79,6 +79,12 @@ extern "C" {
 #define OPENRAVE_AV_PACKET_UNREF av_packet_unref
 #endif
 
+#if LIBAVCODEC_VERSION_MAJOR < 56
+#define OPENRAVE_AV_FRAME_ALLOC avcodec_alloc_frame
+#else
+#define OPENRAVE_AV_FRAME_ALLOC av_frame_alloc
+#endif
+
 class VideoGlobalState
 {
 public:
@@ -824,8 +830,8 @@ protected:
 #endif
         _bWroteHeader = true;
 
-        _picture = avcodec_alloc_frame();
-        _yuv420p = avcodec_alloc_frame();
+        _picture = OPENRAVE_AV_FRAME_ALLOC();
+        _yuv420p = OPENRAVE_AV_FRAME_ALLOC();
 
         _outbuf_size = 500000;
         _outbuf = (char*)malloc(_outbuf_size);
