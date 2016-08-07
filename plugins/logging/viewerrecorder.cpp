@@ -63,6 +63,14 @@ extern "C" {
 #endif
 }
 
+#if LIBAVUTIL_VERSION_MAJOR < 52
+#define OPENRAVE_AV_PIX_FMT_YUV420P PIX_FMT_YUV420P
+#define OPENRAVE_AV_PIX_FMT_BGR24 PIX_FMT_BGR24
+#else
+#define OPENRAVE_AV_PIX_FMT_YUV420P AV_PIX_FMT_YUV420P
+#define OPENRAVE_AV_PIX_FMT_BGR24 AV_PIX_FMT_BGR24
+#endif
+
 class VideoGlobalState
 {
 public:
@@ -767,7 +775,7 @@ protected:
         }
         codec_ctx->gop_size = 10;
         codec_ctx->max_b_frames = 1;
-        codec_ctx->pix_fmt = PIX_FMT_YUV420P;
+        codec_ctx->pix_fmt = OPENRAVE_AV_PIX_FMT_YUV420P;
 
 #if LIBAVFORMAT_VERSION_INT >= (54<<16)
         // not necessary to set parameters?
@@ -815,11 +823,11 @@ protected:
         _outbuf = (char*)malloc(_outbuf_size);
         BOOST_ASSERT(!!_outbuf);
 
-        _picture_size = avpicture_get_size(PIX_FMT_YUV420P, codec_ctx->width, codec_ctx->height);
+        _picture_size = avpicture_get_size(OPENRAVE_AV_PIX_FMT_YUV420P, codec_ctx->width, codec_ctx->height);
         _picture_buf = (char*)malloc(_picture_size);
         BOOST_ASSERT(!!_picture_buf);
 
-        avpicture_fill((AVPicture*)_yuv420p, (uint8_t*)_picture_buf, PIX_FMT_YUV420P, codec_ctx->width, codec_ctx->height);
+        avpicture_fill((AVPicture*)_yuv420p, (uint8_t*)_picture_buf, OPENRAVE_AV_PIX_FMT_YUV420P, codec_ctx->width, codec_ctx->height);
     }
 
     void _AddFrame(void* pdata)
@@ -844,7 +852,7 @@ protected:
 
 #ifdef HAVE_NEW_FFMPEG
         struct SwsContext *img_convert_ctx;
-        img_convert_ctx = sws_getContext(_stream->codec->width, _stream->codec->height, PIX_FMT_BGR24, _stream->codec->width, _stream->codec->height, PIX_FMT_YUV420P, SWS_BICUBIC /* flags */, NULL, NULL, NULL);
+        img_convert_ctx = sws_getContext(_stream->codec->width, _stream->codec->height, OPENRAVE_AV_PIX_FMT_BGR24, _stream->codec->width, _stream->codec->height, OPENRAVE_AV_PIX_FMT_YUV420P, SWS_BICUBIC /* flags */, NULL, NULL, NULL);
         if (!sws_scale(img_convert_ctx, _picture->data, _picture->linesize, 0, _stream->codec->height, _yuv420p->data, _yuv420p->linesize)) {
             sws_freeContext(img_convert_ctx);
             throw OPENRAVE_EXCEPTION_FORMAT0("ADD_FRAME sws_scale failed",ORE_Assert);
@@ -852,7 +860,7 @@ protected:
 
         sws_freeContext(img_convert_ctx);
 #else
-        if( img_convert((AVPicture*)_yuv420p, PIX_FMT_YUV420P, (AVPicture*)_picture, PIX_FMT_BGR24, _stream->codec->width, _stream->codec->height) ) {
+        if( img_convert((AVPicture*)_yuv420p, OPENRAVE_AV_PIX_FMT_YUV420P, (AVPicture*)_picture, OPENRAVE_AV_PIX_FMT_BGR24, _stream->codec->width, _stream->codec->height) ) {
             throw OPENRAVE_EXCEPTION_FORMAT0("ADD_FRAME img_convert failed",ORE_Assert);
         }
 #endif
