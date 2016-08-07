@@ -71,6 +71,14 @@ extern "C" {
 #define OPENRAVE_AV_PIX_FMT_BGR24 AV_PIX_FMT_BGR24
 #endif
 
+#if LIBAVCODEC_VERSION_MAJOR < 56
+#define OPENRAVE_AV_PACKET_UNREF av_destruct_packet
+#elif LIBAVCODEC_VERSION_MAJOR < 58
+#define OPENRAVE_AV_PACKET_UNREF av_free_packet
+#else
+#define OPENRAVE_AV_PACKET_UNREF av_packet_unref
+#endif
+
 class VideoGlobalState
 {
 public:
@@ -872,7 +880,7 @@ protected:
         av_init_packet(&pkt);
         int ret = avcodec_encode_video2(_stream->codec, &pkt, _yuv420p, &got_packet);
         if( ret < 0 ) {
-            av_destruct_packet(&pkt);
+            OPENRAVE_AV_PACKET_UNREF(&pkt);
             throw OPENRAVE_EXCEPTION_FORMAT("avcodec_encode_video2 failed with %d",ret,ORE_Assert);
         }
         if( got_packet ) {
@@ -881,11 +889,11 @@ protected:
                 _stream->codec->coded_frame->key_frame = !!(pkt.flags & AV_PKT_FLAG_KEY);
             }
             if( av_write_frame(_output, &pkt) < 0) {
-                av_destruct_packet(&pkt);
+                OPENRAVE_AV_PACKET_UNREF(&pkt);
                 throw OPENRAVE_EXCEPTION_FORMAT0("av_write_frame failed",ORE_Assert);
             }
         }
-        av_destruct_packet(&pkt);
+        OPENRAVE_AV_PACKET_UNREF(&pkt);
 #else
         int size = avcodec_encode_video(_stream->codec, (uint8_t*)_outbuf, _outbuf_size, _yuv420p);
         if (size < 0) {
